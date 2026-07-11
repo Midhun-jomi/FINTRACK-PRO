@@ -1,0 +1,288 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap');
+
+// Define css variables for Maximalist/Neo-Brutalist design system
+:root {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --text-primary: #0a0b10;
+  --text-secondary: #374151;
+  --border-color: #000000;
+  --shadow-color: #000000;
+  
+  // Neon Palette
+  --color-primary: #8b5cf6; // Purple
+  --color-secondary: #ec4899; // Pink
+  --color-success: #10b981; // Green
+  --color-warning: #f59e0b; // Amber
+  --color-error: #ef4444; // Red
+  --color-accent: #06b6d4; // Cyan
+  
+  --border-width: 3px;
+  --card-radius: 12px;
+  --hard-shadow: 6px 6px 0px var(--shadow-color);
+  --hard-shadow-hover: 9px 9px 0px var(--shadow-color);
+  
+  --font-family-header: 'Syne', sans-serif;
+  --font-family-body: 'Space Grotesk', sans-serif;
+}
+
+// Dark Mode overrides
+body.dark-theme {
+  --bg-primary: #06070d;
+  --bg-secondary: #0e101c;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --border-color: #ffffff;
+  --shadow-color: #ff007f; // Hot pink shadow in dark mode!
+  
+  --color-primary: #00f0ff; // Electric Cyan
+  --color-secondary: #ff007f; // Hot Pink
+  --color-success: #39ff14; // Neon Green
+  --color-warning: #ff5f1f; // Neon Orange
+  --color-error: #ff3333; // Red
+  --color-accent: #ffd700; // Gold
+  
+  --hard-shadow: 6px 6px 0px #ff007f;
+  --hard-shadow-hover: 8px 8px 0px #00f0ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-header);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+// Neo-Brutalist Card Elements
+.max-card {
+  background-color: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--card-radius);
+  box-shadow: var(--hard-shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: var(--hard-shadow-hover);
+  }
+
+  &.primary-glow {
+    border-color: var(--color-primary);
+  }
+  &.secondary-glow {
+    border-color: var(--color-secondary);
+  }
+  &.success-glow {
+    border-color: var(--color-success);
+  }
+}
+
+// Bold Header Badges
+.max-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--border-color);
+  border-radius: 30px;
+  box-shadow: 2px 2px 0px var(--border-color);
+  
+  &.primary {
+    background-color: var(--color-primary);
+    color: #000;
+    body.dark-theme & { color: #000; }
+  }
+  &.secondary {
+    background-color: var(--color-secondary);
+    color: #fff;
+  }
+  &.success {
+    background-color: var(--color-success);
+    color: #000;
+  }
+  &.warning {
+    background-color: var(--color-warning);
+    color: #000;
+  }
+  &.error {
+    background-color: var(--color-error);
+    color: #fff;
+  }
+  &.accent {
+    background-color: var(--color-accent);
+    color: #000;
+  }
+}
+
+// Custom Grid Layouts for Maximalism
+.max-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+// Neo-Brutalist Buttons Override
+.max-btn {
+  font-family: var(--font-family-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--text-primary);
+  box-shadow: 4px 4px 0px var(--border-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--border-color);
+  }
+  
+  &:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px var(--border-color);
+  }
+  
+  &.secondary {
+    background-color: var(--color-secondary);
+    color: #ffffff;
+  }
+  &.accent {
+    background-color: var(--color-accent);
+    color: #000000;
+  }
+  &.danger {
+    background-color: var(--color-error);
+    color: #ffffff;
+  }
+  &.flat {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  &:disabled {
+    background-color: #cbd5e1;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+    border-color: #94a3b8;
+  }
+}
+
+// Text Input Overrides
+.max-input {
+  width: 100%;
+  padding: 12px;
+  font-family: var(--font-family-body);
+  font-size: 16px;
+  font-weight: 500;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 8px;
+  outline: none;
+  box-shadow: 3px 3px 0px var(--border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:focus {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0px var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+}
+
+// Angular Material component global overrides for Neo-Brutalism
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: var(--bg-secondary) !important;
+  border: var(--border-width) solid var(--border-color) !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--hard-shadow) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.mat-mdc-dialog-title {
+  background-color: var(--color-primary) !important;
+  color: #000 !important;
+  font-family: var(--font-family-header) !important;
+  font-weight: 800 !important;
+  padding: 16px 24px !important;
+  border-bottom: var(--border-width) solid var(--border-color) !important;
+  margin: 0 !important;
+}
+
+.mat-mdc-dialog-content {
+  padding: 24px !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-family-body) !important;
+}
+
+.mat-mdc-dialog-actions {
+  padding: 16px 24px !important;
+  border-top: 2px solid var(--border-color) !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+// Toast styling override helper
+.max-toast {
+  border: 2px solid var(--border-color) !important;
+  box-shadow: 4px 4px 0px var(--border-color) !important;
+  font-family: var(--font-family-body) !important;
+  font-weight: 700 !important;
+  
+  &.success-toast {
+    background-color: var(--color-success) !important;
+    color: #000 !important;
+  }
+  &.error-toast {
+    background-color: var(--color-error) !important;
+    color: #fff !important;
+  }
+}
+
+// Loading Skeleton Overrides
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-primary) 25%, var(--bg-secondary) 50%, var(--bg-primary) 75%);
+  background-size: 200% 100%;
+  animation: loading-skeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

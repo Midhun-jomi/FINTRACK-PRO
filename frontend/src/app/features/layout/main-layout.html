@@ -1,0 +1,129 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav"
+      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false">
+    
+    <div class="logo-area">
+      <mat-icon class="logo-icon">payments</mat-icon>
+      <span class="logo-text">FINTRACK PRO</span>
+    </div>
+
+    <mat-nav-list class="nav-list">
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span class="link-label">Dashboard</span>
+      </a>
+
+      <a mat-list-item routerLink="/income" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>trending_up</mat-icon>
+        <span class="link-label">Incomes</span>
+      </a>
+
+      <a mat-list-item routerLink="/expenses" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>trending_down</mat-icon>
+        <span class="link-label">Expenses</span>
+      </a>
+
+      <a mat-list-item routerLink="/budget" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>assessment</mat-icon>
+        <span class="link-label">Budgets</span>
+      </a>
+
+      <a mat-list-item routerLink="/savings" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>track_changes</mat-icon>
+        <span class="link-label">Savings Goals</span>
+      </a>
+
+      <a mat-list-item routerLink="/reports" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>analytics</mat-icon>
+        <span class="link-label">Reports</span>
+      </a>
+
+      <a mat-list-item routerLink="/profile" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>person</mat-icon>
+        <span class="link-label">My Profile</span>
+      </a>
+
+      @if (isAdmin()) {
+        <div class="admin-divider">ADMIN CONTROL</div>
+        <a mat-list-item routerLink="/admin" routerLinkActive="active-link" class="admin-link">
+          <mat-icon matListItemIcon class="admin-icon">admin_panel_settings</mat-icon>
+          <span class="link-label">Admin Panel</span>
+        </a>
+      }
+    </mat-nav-list>
+
+    <div class="sidebar-footer">
+      <div class="footer-badge max-badge primary">v1.0 Pro</div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="sidenav-content">
+    <mat-toolbar class="navbar">
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button
+        (click)="drawer.toggle()"
+        *ngIf="isHandset$ | async">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+
+      <span class="page-title">{{ activePageTitle() }}</span>
+      <span class="spacer"></span>
+
+      <!-- Theme Toggle -->
+      <button mat-icon-button (click)="toggleTheme()" class="theme-toggle" title="Toggle Theme">
+        <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <!-- Notifications Menu -->
+      <button mat-icon-button [matMenuTriggerFor]="notifyMenu" class="notify-btn" title="Notifications">
+        <mat-icon [matBadge]="unreadCount()" matBadgeColor="warn" [matBadgeHidden]="unreadCount() === 0">notifications</mat-icon>
+      </button>
+      <mat-menu #notifyMenu="matMenu" class="max-menu">
+        <div class="menu-header">
+          <span>Notifications</span>
+          <button mat-button class="mark-all-btn" (click)="markAllNotificationsRead()" *ngIf="unreadCount() > 0">Mark read</button>
+        </div>
+        <div class="menu-items">
+          @if (notifications().length === 0) {
+            <div class="empty-notify">No alerts at the moment.</div>
+          } @else {
+            @for (item of notifications().slice(0, 5); track item.id) {
+              <div class="notify-item" [class.unread]="!item.isRead" (click)="markNotificationRead(item.id)">
+                <div class="notify-dot" [class.alert]="item.type === 'BudgetAlert'"></div>
+                <div class="notify-body">
+                  <div class="notify-text">{{ item.message }}</div>
+                  <div class="notify-time">{{ item.createdAt | date:'shortTime' }}</div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </mat-menu>
+
+      <!-- Profile Menu -->
+      <button mat-button [matMenuTriggerFor]="profileMenu" class="user-menu-btn">
+        <span class="username">{{ currentUser()?.username }}</span>
+        <mat-icon class="user-icon">account_circle</mat-icon>
+      </button>
+      <mat-menu #profileMenu="matMenu" class="max-menu">
+        <button mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>
+          <span>My Profile</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Sign Out</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <!-- Main Viewport Router Outlet -->
+    <main class="main-viewport">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
