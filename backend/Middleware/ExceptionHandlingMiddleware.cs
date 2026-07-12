@@ -42,8 +42,8 @@ namespace FinTrack.Api.Middleware
             var response = new
             {
                 Message = "An unexpected error occurred on the server.",
-                Details = exception.Message,
-                StackTrace = exception.StackTrace
+                Details = _env.IsDevelopment() ? exception.Message : null,
+                StackTrace = _env.IsDevelopment() ? exception.StackTrace : null
             };
 
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

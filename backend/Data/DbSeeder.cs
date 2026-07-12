@@ -5,14 +5,30 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FinTrack.Api.Entities;
 
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace FinTrack.Api.Data
 {
     public static class DbSeeder
     {
         public static async Task SeedAsync(FinTrackDbContext context)
         {
-            // Ensure database is created and schema exists
-            await context.Database.EnsureCreatedAsync();
+            // Ensure database schema exists.
+            // On pre-existing empty databases (like Supabase), EnsureCreatedAsync() skips table creation.
+            // RelationalDatabaseCreator forces table creation if they don't exist.
+            var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+            if (databaseCreator != null)
+            {
+                if (!await databaseCreator.HasTablesAsync())
+                {
+                    await databaseCreator.CreateTablesAsync();
+                }
+            }
+            else
+            {
+                await context.Database.EnsureCreatedAsync();
+            }
 
             // Seed Categories
             if (!await context.Categories.AnyAsync())
