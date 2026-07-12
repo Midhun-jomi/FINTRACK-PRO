@@ -9,7 +9,7 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5269/api'
-    : 'https://YOUR_BACKEND_URL.onrender.com/api';
+    : 'https://fintrack-pro-zj3m.onrender.com/api';
 
   get<T>(path: string, params: HttpParams = new HttpParams()): Observable<T> {
     return this.http.get<T>(`${this.baseUrl}/${path}`, { params });
