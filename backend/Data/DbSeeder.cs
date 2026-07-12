@@ -15,19 +15,29 @@ namespace FinTrack.Api.Data
         public static async Task SeedAsync(FinTrackDbContext context)
         {
             // Ensure database schema exists.
-            // On pre-existing empty databases (like Supabase), EnsureCreatedAsync() skips table creation.
-            // RelationalDatabaseCreator forces table creation if they don't exist.
-            var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
-            if (databaseCreator != null)
+            // On pre-existing empty databases (like Supabase), EnsureCreated() or HasTables() can fail/skip.
+            // We verify by trying to query the Categories table, and if it fails, we force-create the tables.
+            bool tablesExist = true;
+            try
             {
-                if (!await databaseCreator.HasTablesAsync())
+                await context.Categories.AnyAsync();
+            }
+            catch
+            {
+                tablesExist = false;
+            }
+
+            if (!tablesExist)
+            {
+                var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+                if (databaseCreator != null)
                 {
                     await databaseCreator.CreateTablesAsync();
                 }
-            }
-            else
-            {
-                await context.Database.EnsureCreatedAsync();
+                else
+                {
+                    await context.Database.EnsureCreatedAsync();
+                }
             }
 
             // Seed Categories
