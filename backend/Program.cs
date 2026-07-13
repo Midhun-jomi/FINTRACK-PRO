@@ -19,6 +19,8 @@ using FinTrack.Api.Profiles;
 using FinTrack.Api.Services;
 using FinTrack.Api.Validators;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog
