@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthResponse } from '../../core/models/models';
 
@@ -65,13 +66,35 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
             </div>
 
             <div class="form-group">
-              <label for="profilePictureUrl" class="form-label">Profile Avatar URL</label>
-              <input 
-                type="text" 
-                id="profilePictureUrl" 
-                formControlName="profilePictureUrl" 
-                class="max-input" 
-                placeholder="https://example.com/avatar.png" />
+              <label class="form-label">Profile Avatar</label>
+              <div class="avatar-upload-section">
+                <div class="avatar-preview-container">
+                  <img 
+                    *ngIf="profileForm.get('profilePictureUrl')?.value; else defaultIcon"
+                    [src]="profileForm.get('profilePictureUrl')?.value" 
+                    alt="Profile Avatar" 
+                    class="avatar-preview" />
+                  <ng-template #defaultIcon>
+                    <div class="avatar-fallback">
+                      <mat-icon>account_circle</mat-icon>
+                    </div>
+                  </ng-template>
+                  <div class="avatar-overlay-spinner" *ngIf="isUploadingAvatar()">
+                    <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                  </div>
+                </div>
+                <div class="avatar-actions">
+                  <label class="max-btn success file-upload-label">
+                    <mat-icon>cloud_upload</mat-icon>
+                    <span>Upload Image</span>
+                    <input type="file" (change)="onAvatarSelected($event)" accept="image/*" style="display: none;" />
+                  </label>
+                  <button type="button" class="max-btn flat py-1" *ngIf="profileForm.get('profilePictureUrl')?.value" (click)="removeAvatar()">
+                    <mat-icon>delete</mat-icon>
+                    <span>Remove</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button type="submit" class="max-btn primary" [disabled]="profileForm.invalid || isSavingProfile()">
@@ -235,10 +258,82 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     .spinner {
       margin-right: 8px;
     }
+
+    .avatar-upload-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 8px;
+    }
+
+    .avatar-preview-container {
+      position: relative;
+      height: 90px;
+      width: 90px;
+      border-radius: 50%;
+      border: 3px solid var(--border-color);
+      box-shadow: 4px 4px 0px var(--shadow-color);
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .avatar-preview {
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-fallback {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+      background-color: var(--bg-primary);
+      color: var(--text-secondary);
+      
+      mat-icon {
+        font-size: 64px;
+        height: 64px;
+        width: 64px;
+      }
+    }
+
+    .avatar-overlay-spinner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .avatar-actions {
+      display: flex;
+      flex-content: center;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-upload-label {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+    }
   `]
 })
 export class ProfileComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly apiService = inject(ApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
@@ -246,6 +341,7 @@ export class ProfileComponent implements OnInit {
   currentUser = this.authService.currentUser;
   isSavingProfile = signal<boolean>(false);
   isSavingPassword = signal<boolean>(false);
+  isUploadingAvatar = signal<boolean>(false);
 
   // Password complexity check
   private readonly passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\!\@\#\$\%\^\&\*\(\)\_\+\-\=\[\]\{\}\;\:\'""\,\<\.\>\/\?\\\|])[A-Za-z\d\!\@\#\$\%\^\&\*\(\)\_\+\-\=\[\]\{\}\;\:\'""\,\<\.\>\/\?\\\|]{6,}$/;
@@ -319,6 +415,60 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         this.isSavingPassword.set(false);
         this.notificationService.showError(err.error?.message || 'Failed to update password.');
+      }
+    });
+  }
+
+  onAvatarSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.notificationService.showError('Please select a valid image file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      this.notificationService.showError('Image size must be less than 2MB.');
+      return;
+    }
+
+    this.isUploadingAvatar.set(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.apiService.post<any>('auth/profile/avatar-upload', formData).subscribe({
+      next: (res) => {
+        this.isUploadingAvatar.set(false);
+        this.profileForm.patchValue({ profilePictureUrl: res.url });
+        
+        // Re-save user session with updated details immediately so toolbar updates
+        this.authService.updateProfile({
+          username: this.profileForm.value.username,
+          preferredCurrency: this.profileForm.value.preferredCurrency,
+          profilePictureUrl: res.url
+        }).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Avatar uploaded and saved successfully!');
+          }
+        });
+      },
+      error: (err) => {
+        this.isUploadingAvatar.set(false);
+        this.notificationService.showError(err.error?.message || 'Failed to upload profile picture.');
+      }
+    });
+  }
+
+  removeAvatar(): void {
+    this.profileForm.patchValue({ profilePictureUrl: '' });
+    // Save state immediately
+    this.authService.updateProfile({
+      username: this.profileForm.value.username,
+      preferredCurrency: this.profileForm.value.preferredCurrency,
+      profilePictureUrl: ''
+    }).subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Avatar removed successfully!');
       }
     });
   }

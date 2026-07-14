@@ -24,6 +24,7 @@ namespace FinTrack.Api.Controllers
         private readonly IEmailService _emailService;
         private readonly IAuditLogService _auditLogService;
         private readonly IMapper _mapper;
+        private readonly IStorageService _storageService;
         private readonly PasswordHasher<User> _passwordHasher;
 
         public AuthController(
@@ -31,13 +32,15 @@ namespace FinTrack.Api.Controllers
             IJwtService jwtService,
             IEmailService emailService,
             IAuditLogService auditLogService,
-            IMapper mapper)
+            IMapper mapper,
+            IStorageService storageService)
         {
             _context = context;
             _jwtService = jwtService;
             _emailService = emailService;
             _auditLogService = auditLogService;
             _mapper = mapper;
+            _storageService = storageService;
             _passwordHasher = new PasswordHasher<User>();
         }
 
@@ -289,6 +292,46 @@ namespace FinTrack.Api.Controllers
                 PreferredCurrency = user.PreferredCurrency,
                 ProfilePictureUrl = user.ProfilePictureUrl
             });
+        }
+
+        [Authorize]
+        [HttpPost("profile/avatar-upload")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { Message = "No file uploaded." });
+            }
+
+            var userId = GetCurrentUserId();
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            // Optional: delete old avatar from storage if it is a local path or storage path
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            {
+                try
+                {
+                    await _storageService.DeleteFileAsync(user.ProfilePictureUrl);
+                }
+                catch
+                {
+                    // Ignore storage deletion errors to avoid blocking profile updates
+                }
+            }
+
+            using (var stream = file.OpenReadStream())
+            {
+                var fileUrl = await _storageService.UploadFileAsync(stream, file.FileName, file.ContentType);
+                user.ProfilePictureUrl = fileUrl;
+                await _context.SaveChangesAsync();
+                
+                await _auditLogService.LogActionAsync(userId, "UploadAvatar", "User", userId, "Uploaded new profile picture");
+
+                return Ok(new { Url = fileUrl });
+            }
         }
 
         [Authorize]

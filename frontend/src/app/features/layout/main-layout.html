@@ -107,7 +107,10 @@
       <!-- Profile Menu -->
       <button mat-button [matMenuTriggerFor]="profileMenu" class="user-menu-btn">
         <span class="username">{{ currentUser()?.username }}</span>
-        <mat-icon class="user-icon">account_circle</mat-icon>
+        <img *ngIf="currentUser()?.profilePictureUrl; else defaultAvatar" [src]="currentUser()?.profilePictureUrl" class="user-avatar-nav" alt="User Avatar" />
+        <ng-template #defaultAvatar>
+          <mat-icon class="user-icon">account_circle</mat-icon>
+        </ng-template>
       </button>
       <mat-menu #profileMenu="matMenu" class="max-menu">
         <button mat-menu-item routerLink="/profile">
