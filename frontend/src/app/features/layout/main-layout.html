@@ -5,7 +5,7 @@
       [opened]="(isHandset$ | async) === false">
     
     <div class="logo-area">
-      <mat-icon class="logo-icon">payments</mat-icon>
+      <mat-icon class="logo-icon">account_balance_wallet</mat-icon>
       <span class="logo-text">FINTRACK PRO</span>
     </div>
 
@@ -109,7 +109,7 @@
         <span class="username">{{ currentUser()?.username }}</span>
         <img *ngIf="currentUser()?.profilePictureUrl; else defaultAvatar" [src]="currentUser()?.profilePictureUrl" class="user-avatar-nav" alt="User Avatar" />
         <ng-template #defaultAvatar>
-          <mat-icon class="user-icon">account_circle</mat-icon>
+          <mat-icon class="user-icon">person</mat-icon>
         </ng-template>
       </button>
       <mat-menu #profileMenu="matMenu" class="max-menu">

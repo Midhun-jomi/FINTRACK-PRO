@@ -76,7 +76,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
                     class="avatar-preview" />
                   <ng-template #defaultIcon>
                     <div class="avatar-fallback">
-                      <mat-icon>account_circle</mat-icon>
+                      <mat-icon>person</mat-icon>
                     </div>
                   </ng-template>
                   <div class="avatar-overlay-spinner" *ngIf="isUploadingAvatar()">
