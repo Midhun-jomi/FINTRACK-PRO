@@ -31,7 +31,12 @@ namespace FinTrack.Api.Services
             }
 
             var request = _httpContextAccessor.HttpContext?.Request;
-            var fileUrl = $"{request?.Scheme}://{request?.Host}/uploads/{uniqueFileName}";
+            var scheme = request?.Scheme ?? "https";
+            if (request != null && !request.Host.Host.Contains("localhost") && !request.Host.Host.Contains("127.0.0.1"))
+            {
+                scheme = "https";
+            }
+            var fileUrl = $"{scheme}://{request?.Host}/uploads/{uniqueFileName}";
             return fileUrl;
         }
 
