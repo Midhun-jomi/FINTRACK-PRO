@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
@@ -13,11 +13,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { FormsModule } from '@angular/forms';
 
 // Services & Models
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ApiService } from '../../core/services/api.service';
+import { ChatbotService } from '../../core/services/chatbot.service';
 import { Notification } from '../../core/models/models';
 
 @Component({
@@ -34,23 +37,43 @@ import { Notification } from '../../core/models/models';
     MatIconModule,
     MatListModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatProgressSpinnerModule,
+    FormsModule
   ],
   templateUrl: './main-layout.html',
-  styleUrl: './main-layout.scss'
+  styleUrl: './main-layout.scss',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class MainLayoutComponent implements OnInit {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
   private readonly apiService = inject(ApiService);
   
   protected readonly authService = inject(AuthService);
   protected readonly themeService = inject(ThemeService);
+  protected readonly chatbotService = inject(ChatbotService);
 
   // Expose signals for HTML bindings
   protected readonly currentUser = this.authService.currentUser;
   protected readonly isAdmin = this.authService.isAdmin;
   protected readonly isDark = this.themeService.isDark;
+
+  // Chat window state signals
+  isChatOpen = signal<boolean>(false);
+  showCompanionSettings = signal<boolean>(false);
+  chatInput = signal<string>('');
+
+  // Expose chatbot signals to template
+  activeCompanion = this.chatbotService.activeCompanion;
+  companions = this.chatbotService.companions;
+  chatMessages = this.chatbotService.messages;
+
+  // Wandering companion pet states
+  petX = signal<number | null>(null);
+  petY = signal<number | null>(null);
+  isWandering = signal<boolean>(false);
+  private wanderInterval: any;
 
   // Active page title signal
   activePageTitle = signal<string>('Dashboard');
@@ -82,6 +105,12 @@ export class MainLayoutComponent implements OnInit {
       // Poll notifications every 30 seconds
       setInterval(() => this.loadNotifications(), 30000);
     }
+
+    this.startWandering();
+  }
+
+  ngOnDestroy(): void {
+    this.stopWandering();
   }
 
   toggleTheme(): void {
@@ -140,5 +169,89 @@ export class MainLayoutComponent implements OnInit {
         );
       }
     });
+  }
+
+  toggleChat(): void {
+    this.isChatOpen.update(v => !v);
+    if (this.isChatOpen()) {
+      this.stopWandering();
+      this.showCompanionSettings.set(false);
+      this.scrollToBottom();
+    } else {
+      this.startWandering();
+    }
+  }
+
+  startWandering(): void {
+    if (this.wanderInterval) clearInterval(this.wanderInterval);
+    
+    // Move every 12 seconds
+    this.wanderInterval = setInterval(() => {
+      if (this.isChatOpen()) return;
+      
+      this.isWandering.set(true);
+      
+      // Boundaries
+      const padding = 100;
+      const sidebarWidth = window.innerWidth > 959 ? 260 : 0;
+      const topHeaderHeight = 70;
+      
+      const minX = sidebarWidth + padding;
+      const maxX = window.innerWidth - padding;
+      const minY = topHeaderHeight + padding;
+      const maxY = window.innerHeight - padding;
+      
+      const newX = Math.random() * (maxX - minX) + minX;
+      const newY = Math.random() * (maxY - minY) + minY;
+      
+      this.petX.set(newX);
+      this.petY.set(newY);
+      
+      setTimeout(() => {
+        this.isWandering.set(false);
+      }, 3000);
+    }, 12000);
+  }
+
+  stopWandering(): void {
+    if (this.wanderInterval) {
+      clearInterval(this.wanderInterval);
+    }
+    this.petX.set(null);
+    this.petY.set(null);
+    this.isWandering.set(false);
+  }
+
+  toggleCompanionSettings(): void {
+    this.showCompanionSettings.update(v => !v);
+  }
+
+  selectCompanion(id: 'mia' | 'leo' | 'antigravity'): void {
+    this.chatbotService.selectCompanion(id);
+    this.showCompanionSettings.set(false);
+    this.scrollToBottom();
+  }
+
+  sendChatMessage(): void {
+    const text = this.chatInput().trim();
+    if (!text) return;
+    
+    this.chatbotService.sendMessage(text);
+    this.chatInput.set('');
+    this.scrollToBottom();
+  }
+
+  triggerQuickReply(query: string): void {
+    this.chatbotService.sendMessage(query);
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const container = document.getElementById('chat-messages-container');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
   }
 }
